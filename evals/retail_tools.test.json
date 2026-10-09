@@ -1,0 +1,37 @@
+[
+  {
+    "name": "valid_csv_calls_analysis_tools",
+    "initial_session": {
+      "app_name": "app",
+      "user_id": "adk-eval-user",
+      "state": {
+        "csv_path": "..\\data\\sample\\sales.csv"
+      }
+    },
+    "data": [
+      {
+        "query": "Summarize sales performance",
+        "expected_tool_use": [
+          {
+            "tool_name": "profile_uploaded_dataset",
+            "tool_input": {}
+          },
+          {
+            "tool_name": "analyze_sales",
+            "tool_input": {}
+          },
+          {
+            "tool_name": "analyze_products",
+            "tool_input": {}
+          },
+          {
+            "tool_name": "analyze_customers",
+            "tool_input": {}
+          }
+        ],
+        "expected_intermediate_agent_responses": [],
+        "reference": "Summarize sales performance using the returned analysis results."
+      }
+    ]
+  }
+]

@@ -1,0 +1,12 @@
+# ADK workflow, SQLite-backed sessions, and DeepSeek via LiteLLM
+google-adk[db,eval]>=2.0.0,<3.0.0
+litellm>=1.104.0,<2.0.0
+
+# Application dependencies
+pandas>=2.2.0,<4.0.0
+pydantic>=2.0.0,<3.0.0
+python-dotenv>=1.0.0,<2.0.0
+streamlit>=1.40.0,<2.0.0
+
+# Test dependency
+pytest>=8.0.0,<10.0.0

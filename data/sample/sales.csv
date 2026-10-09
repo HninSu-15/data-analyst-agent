@@ -1,0 +1,101 @@
+order_id,order_date,customer_id,product_id,product_name,category,gender,size,color,quantity,unit_price,discount_pct,cost_per_unit,region,payment_method,order_status
+ORD0001,2026-06-01,C008,P011,Chino Pants,Pants,Men,L,Green,2,40.0,10,21.0,Yangon,KBZPay,Completed
+ORD0002,2026-01-03,C017,P003,Slim Fit Jeans,Jeans,Women,L,Green,2,42.0,10,22.0,Mandalay,Cash on Delivery,Completed
+ORD0003,2026-05-26,C025,P013,Formal Blouse,Shirt,Women,L,Blue,1,35.0,0,17.0,Naypyidaw,Credit Card,Completed
+ORD0004,2026-04-12,C020,P013,Formal Blouse,Shirt,Women,S,Red,1,35.0,5,17.0,Yangon,KBZPay,Completed
+ORD0005,2026-07-20,C012,P013,Formal Blouse,Shirt,Women,L,Black,2,35.0,5,17.0,Mandalay,KBZPay,Completed
+ORD0006,2026-08-13,C021,P004,Classic Blue Jeans,Jeans,Men,M,Blue,1,45.0,5,24.0,Naypyidaw,KBZPay,Completed
+ORD0007,2026-02-24,C015,P003,Slim Fit Jeans,Jeans,Women,XL,Green,2,42.0,0,22.0,Yangon,Credit Card,Completed
+ORD0008,2026-07-08,C026,P013,Formal Blouse,Shirt,Women,M,White,3,35.0,10,17.0,Yangon,Credit Card,Completed
+ORD0009,2026-05-29,C015,P014,Running Shorts,Shorts,Unisex,S,Green,2,27.0,5,13.0,Yangon,Cash on Delivery,Completed
+ORD0010,2026-04-08,C005,P015,Knit Cardigan,Knitwear,Women,S,Black,3,44.0,0,23.0,Mandalay,WavePay,Completed
+ORD0011,2026-04-03,C020,P005,Linen Summer Dress,Dress,Women,M,Beige,3,55.0,0,28.0,Mawlamyine,KBZPay,Completed
+ORD0012,2026-05-09,C011,P012,Basic Polo Shirt,Shirt,Men,M,Red,1,30.0,15,15.0,Yangon,Credit Card,Completed
+ORD0013,2026-07-17,C028,P014,Running Shorts,Shorts,Unisex,L,Beige,2,27.0,0,13.0,Mandalay,Credit Card,Completed
+ORD0014,2026-05-25,C030,P014,Running Shorts,Shorts,Unisex,M,Black,1,27.0,5,13.0,Yangon,Credit Card,Completed
+ORD0015,2026-03-19,C003,P015,Knit Cardigan,Knitwear,Women,L,Beige,2,44.0,0,23.0,Naypyidaw,Cash on Delivery,Completed
+ORD0016,2026-02-17,C014,P013,Formal Blouse,Shirt,Women,XL,Green,2,35.0,15,17.0,Mawlamyine,Credit Card,Completed
+ORD0017,2026-06-12,C017,P006,Casual Midi Dress,Dress,Women,M,Black,1,48.0,10,25.0,Mandalay,WavePay,Completed
+ORD0018,2026-01-23,C008,P009,Pleated Skirt,Skirt,Women,S,Blue,1,38.0,0,19.0,Yangon,Credit Card,Completed
+ORD0019,2026-02-05,C029,P011,Chino Pants,Pants,Men,M,Red,2,40.0,0,21.0,Mandalay,KBZPay,Returned
+ORD0020,2026-04-14,C028,P006,Casual Midi Dress,Dress,Women,L,Green,1,48.0,5,25.0,Naypyidaw,Credit Card,Completed
+ORD0021,2026-01-07,C015,P003,Slim Fit Jeans,Jeans,Women,M,Red,1,42.0,0,22.0,Yangon,Cash on Delivery,Completed
+ORD0022,2026-08-04,C018,P001,Basic Cotton T-Shirt,T-Shirt,Women,XL,White,1,18.0,5,9.0,Naypyidaw,Cash on Delivery,Completed
+ORD0023,2026-04-02,C001,P002,Oversized Graphic T-Shirt,T-Shirt,Unisex,M,Red,1,24.0,15,12.0,Mawlamyine,Cash on Delivery,Completed
+ORD0024,2026-03-31,C024,P001,Basic Cotton T-Shirt,T-Shirt,Women,L,Black,1,18.0,5,9.0,Mandalay,WavePay,Returned
+ORD0025,2026-05-28,C020,P003,Slim Fit Jeans,Jeans,Women,XL,Red,1,42.0,10,22.0,Yangon,WavePay,Completed
+ORD0026,2026-01-03,C019,P006,Casual Midi Dress,Dress,Women,M,Blue,1,48.0,15,25.0,Mandalay,Credit Card,Completed
+ORD0027,2026-04-22,C015,P010,Cargo Pants,Pants,Men,L,Black,1,46.0,10,24.0,Yangon,KBZPay,Returned
+ORD0028,2026-02-09,C012,P002,Oversized Graphic T-Shirt,T-Shirt,Unisex,XL,Blue,1,24.0,5,12.0,Mawlamyine,Credit Card,Completed
+ORD0029,2026-09-21,C022,P008,Denim Jacket,Outerwear,Unisex,L,White,1,65.0,5,36.0,Yangon,WavePay,Completed
+ORD0030,2026-05-23,C022,P005,Linen Summer Dress,Dress,Women,M,Red,1,55.0,0,28.0,Mandalay,KBZPay,Completed
+ORD0031,2026-07-02,C025,P001,Basic Cotton T-Shirt,T-Shirt,Women,XL,White,2,18.0,10,9.0,Yangon,Cash on Delivery,Completed
+ORD0032,2026-01-31,C029,P013,Formal Blouse,Shirt,Women,S,Blue,2,35.0,0,17.0,Yangon,Cash on Delivery,Completed
+ORD0033,2026-03-29,C028,P014,Running Shorts,Shorts,Unisex,M,Green,1,27.0,0,13.0,Yangon,Credit Card,Completed
+ORD0034,2026-08-14,C024,P015,Knit Cardigan,Knitwear,Women,XL,White,4,44.0,0,23.0,Yangon,Cash on Delivery,Cancelled
+ORD0035,2026-06-11,C014,P012,Basic Polo Shirt,Shirt,Men,XL,White,1,30.0,15,15.0,Naypyidaw,KBZPay,Completed
+ORD0036,2026-01-16,C027,P003,Slim Fit Jeans,Jeans,Women,M,White,1,42.0,15,22.0,Mawlamyine,WavePay,Completed
+ORD0037,2026-03-03,C009,P015,Knit Cardigan,Knitwear,Women,M,Green,4,44.0,10,23.0,Yangon,Credit Card,Completed
+ORD0038,2026-01-09,C009,P003,Slim Fit Jeans,Jeans,Women,L,Blue,2,42.0,5,22.0,Yangon,Cash on Delivery,Completed
+ORD0039,2026-05-13,C007,P014,Running Shorts,Shorts,Unisex,L,Black,1,27.0,10,13.0,Yangon,WavePay,Completed
+ORD0040,2026-01-22,C020,P014,Running Shorts,Shorts,Unisex,L,Green,3,27.0,10,13.0,Yangon,Credit Card,Completed
+ORD0041,2026-03-23,C005,P004,Classic Blue Jeans,Jeans,Men,L,Red,2,45.0,0,24.0,Yangon,Credit Card,Completed
+ORD0042,2026-07-10,C014,P004,Classic Blue Jeans,Jeans,Men,L,Blue,1,45.0,5,24.0,Naypyidaw,WavePay,Completed
+ORD0043,2026-07-31,C006,P012,Basic Polo Shirt,Shirt,Men,M,Green,2,30.0,5,15.0,Mandalay,KBZPay,Completed
+ORD0044,2026-07-22,C026,P004,Classic Blue Jeans,Jeans,Men,S,White,4,45.0,10,24.0,Yangon,KBZPay,Completed
+ORD0045,2026-08-19,C023,P003,Slim Fit Jeans,Jeans,Women,M,White,2,42.0,0,22.0,Yangon,KBZPay,Completed
+ORD0046,2026-02-26,C017,P015,Knit Cardigan,Knitwear,Women,L,Black,1,44.0,5,23.0,Mandalay,Credit Card,Completed
+ORD0047,2026-08-20,C029,P012,Basic Polo Shirt,Shirt,Men,L,Beige,1,30.0,0,15.0,Mandalay,Cash on Delivery,Completed
+ORD0048,2026-07-27,C025,P009,Pleated Skirt,Skirt,Women,M,White,1,38.0,0,19.0,Naypyidaw,Credit Card,Completed
+ORD0049,2026-03-29,C005,P008,Denim Jacket,Outerwear,Unisex,M,White,2,65.0,0,36.0,Yangon,Cash on Delivery,Completed
+ORD0050,2026-05-14,C027,P001,Basic Cotton T-Shirt,T-Shirt,Women,XL,Beige,3,18.0,0,9.0,Yangon,Cash on Delivery,Completed
+ORD0051,2026-09-10,C028,P012,Basic Polo Shirt,Shirt,Men,M,Green,1,30.0,20,15.0,Mawlamyine,WavePay,Completed
+ORD0052,2026-03-16,C011,P001,Basic Cotton T-Shirt,T-Shirt,Women,L,Green,1,18.0,5,9.0,Mandalay,WavePay,Completed
+ORD0053,2026-05-30,C019,P005,Linen Summer Dress,Dress,Women,S,Red,1,55.0,5,28.0,Mandalay,WavePay,Returned
+ORD0054,2026-04-07,C011,P006,Casual Midi Dress,Dress,Women,M,Red,1,48.0,0,25.0,Naypyidaw,Cash on Delivery,Cancelled
+ORD0055,2026-05-31,C021,P005,Linen Summer Dress,Dress,Women,XL,Black,2,55.0,0,28.0,Yangon,WavePay,Completed
+ORD0056,2026-06-08,C022,P002,Oversized Graphic T-Shirt,T-Shirt,Unisex,XL,Red,2,24.0,5,12.0,Yangon,WavePay,Completed
+ORD0057,2026-09-23,C020,P002,Oversized Graphic T-Shirt,T-Shirt,Unisex,S,Blue,2,24.0,15,12.0,Yangon,Cash on Delivery,Completed
+ORD0058,2026-02-19,C021,P010,Cargo Pants,Pants,Men,L,Blue,3,46.0,10,24.0,Yangon,KBZPay,Completed
+ORD0059,2026-05-02,C014,P005,Linen Summer Dress,Dress,Women,S,Green,1,55.0,5,28.0,Mandalay,Cash on Delivery,Completed
+ORD0060,2026-09-21,C015,P014,Running Shorts,Shorts,Unisex,L,Green,1,27.0,20,13.0,Mandalay,Cash on Delivery,Completed
+ORD0061,2026-07-19,C028,P004,Classic Blue Jeans,Jeans,Men,XL,Blue,3,45.0,0,24.0,Yangon,Cash on Delivery,Completed
+ORD0062,2026-06-11,C028,P001,Basic Cotton T-Shirt,T-Shirt,Women,M,Blue,2,18.0,5,9.0,Yangon,Credit Card,Completed
+ORD0063,2026-06-09,C017,P008,Denim Jacket,Outerwear,Unisex,S,Green,1,65.0,10,36.0,Mawlamyine,WavePay,Completed
+ORD0064,2026-06-16,C001,P006,Casual Midi Dress,Dress,Women,M,Green,1,48.0,15,25.0,Yangon,Credit Card,Completed
+ORD0065,2026-05-14,C018,P015,Knit Cardigan,Knitwear,Women,L,Blue,1,44.0,0,23.0,Yangon,KBZPay,Completed
+ORD0066,2026-03-24,C025,P007,Hoodie,Outerwear,Unisex,M,Green,1,50.0,15,27.0,Mandalay,Credit Card,Completed
+ORD0067,2026-07-10,C006,P003,Slim Fit Jeans,Jeans,Women,L,White,1,42.0,0,22.0,Yangon,Credit Card,Completed
+ORD0068,2026-02-28,C004,P012,Basic Polo Shirt,Shirt,Men,L,Red,1,30.0,5,15.0,Mawlamyine,WavePay,Completed
+ORD0069,2026-03-28,C027,P007,Hoodie,Outerwear,Unisex,M,Beige,2,50.0,0,27.0,Yangon,WavePay,Completed
+ORD0070,2026-05-10,C008,P001,Basic Cotton T-Shirt,T-Shirt,Women,L,Beige,2,18.0,10,9.0,Yangon,WavePay,Completed
+ORD0071,2026-04-30,C028,P006,Casual Midi Dress,Dress,Women,M,Beige,2,48.0,10,25.0,Mandalay,KBZPay,Completed
+ORD0072,2026-02-07,C003,P004,Classic Blue Jeans,Jeans,Men,M,Black,1,45.0,5,24.0,Yangon,Cash on Delivery,Completed
+ORD0073,2026-04-02,C023,P003,Slim Fit Jeans,Jeans,Women,XL,Black,2,42.0,5,22.0,Yangon,WavePay,Completed
+ORD0074,2026-05-21,C009,P002,Oversized Graphic T-Shirt,T-Shirt,Unisex,S,White,2,24.0,10,12.0,Naypyidaw,Credit Card,Completed
+ORD0075,2026-04-10,C009,P011,Chino Pants,Pants,Men,M,Black,2,40.0,5,21.0,Mandalay,Credit Card,Completed
+ORD0076,2026-01-08,C027,P015,Knit Cardigan,Knitwear,Women,L,Black,4,44.0,15,23.0,Mawlamyine,Credit Card,Completed
+ORD0077,2026-07-06,C021,P006,Casual Midi Dress,Dress,Women,M,Beige,1,48.0,5,25.0,Yangon,KBZPay,Completed
+ORD0078,2026-04-11,C028,P010,Cargo Pants,Pants,Men,M,Red,1,46.0,5,24.0,Yangon,KBZPay,Completed
+ORD0079,2026-03-11,C025,P002,Oversized Graphic T-Shirt,T-Shirt,Unisex,M,Black,2,24.0,10,12.0,Yangon,Cash on Delivery,Completed
+ORD0080,2026-02-12,C016,P009,Pleated Skirt,Skirt,Women,L,White,1,38.0,0,19.0,Mandalay,Credit Card,Completed
+ORD0081,2026-06-04,C021,P001,Basic Cotton T-Shirt,T-Shirt,Women,M,White,1,18.0,0,9.0,Mandalay,Cash on Delivery,Returned
+ORD0082,2026-09-30,C004,P002,Oversized Graphic T-Shirt,T-Shirt,Unisex,XL,Blue,1,24.0,10,12.0,Yangon,Cash on Delivery,Completed
+ORD0083,2026-09-08,C005,P007,Hoodie,Outerwear,Unisex,M,White,3,50.0,10,27.0,Mawlamyine,Cash on Delivery,Completed
+ORD0084,2026-07-09,C010,P013,Formal Blouse,Shirt,Women,L,Beige,4,35.0,5,17.0,Naypyidaw,WavePay,Completed
+ORD0085,2026-04-11,C018,P008,Denim Jacket,Outerwear,Unisex,XL,White,4,65.0,0,36.0,Yangon,Cash on Delivery,Completed
+ORD0086,2026-07-02,C016,P004,Classic Blue Jeans,Jeans,Men,L,Red,4,45.0,15,24.0,Naypyidaw,WavePay,Completed
+ORD0087,2026-01-17,C011,P015,Knit Cardigan,Knitwear,Women,XL,Red,1,44.0,5,23.0,Mawlamyine,KBZPay,Completed
+ORD0088,2026-04-21,C003,P015,Knit Cardigan,Knitwear,Women,XL,Blue,2,44.0,5,23.0,Mandalay,KBZPay,Completed
+ORD0089,2026-08-28,C011,P007,Hoodie,Outerwear,Unisex,XL,Red,3,50.0,0,27.0,Mandalay,KBZPay,Completed
+ORD0090,2026-06-10,C024,P015,Knit Cardigan,Knitwear,Women,XL,Green,2,44.0,0,23.0,Yangon,Cash on Delivery,Completed
+ORD0091,2026-03-01,C026,P001,Basic Cotton T-Shirt,T-Shirt,Women,M,Red,1,18.0,10,9.0,Yangon,Cash on Delivery,Completed
+ORD0092,2026-07-06,C020,P003,Slim Fit Jeans,Jeans,Women,L,White,1,42.0,10,22.0,Mawlamyine,WavePay,Completed
+ORD0093,2026-06-15,C001,P004,Classic Blue Jeans,Jeans,Men,M,Blue,2,45.0,0,24.0,Mawlamyine,KBZPay,Completed
+ORD0094,2026-03-19,C014,P004,Classic Blue Jeans,Jeans,Men,M,Blue,1,45.0,5,24.0,Mandalay,Cash on Delivery,Completed
+ORD0095,2026-04-12,C023,P008,Denim Jacket,Outerwear,Unisex,XL,Green,1,65.0,0,36.0,Yangon,KBZPay,Completed
+ORD0096,2026-07-27,C010,P014,Running Shorts,Shorts,Unisex,M,Blue,1,27.0,0,13.0,Naypyidaw,Credit Card,Completed
+ORD0097,2026-06-22,C005,P010,Cargo Pants,Pants,Men,XL,Green,1,46.0,5,24.0,Mandalay,KBZPay,Completed
+ORD0098,2026-06-03,C011,P014,Running Shorts,Shorts,Unisex,M,White,2,27.0,5,13.0,Naypyidaw,Credit Card,Completed
+ORD0099,2026-03-27,C026,P015,Knit Cardigan,Knitwear,Women,XL,Black,1,44.0,0,23.0,Yangon,WavePay,Completed
+ORD0100,2026-02-22,C013,P011,Chino Pants,Pants,Men,L,Blue,1,40.0,5,21.0,Mawlamyine,KBZPay,Completed
