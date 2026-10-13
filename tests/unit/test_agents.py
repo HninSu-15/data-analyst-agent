@@ -59,7 +59,7 @@ def test_all_phase_two_agents_are_adk_llm_agents_with_expected_state_keys():
     assert manager_agent.output_schema is None
     assert insight_agent.output_schema is None
     assert recommendation_agent.output_schema is None
-    assert followup_agent.mode == "chat"
+    assert followup_agent.mode == "single_turn"
 
 
 def test_data_tools_use_csv_path_from_session_state():

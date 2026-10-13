@@ -5,7 +5,7 @@ from app.config import LLM_MODEL
 followup_agent = LlmAgent(
     name="followup_agent",
     model=LLM_MODEL,
-    mode="chat",
+    mode="single_turn",
     description="Answers follow-up questions using the saved analysis and conversation history.",
     instruction=(
         "Answer the user's latest question using only the saved analysis results and prior "

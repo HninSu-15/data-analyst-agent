@@ -75,6 +75,17 @@ def validate_dataset_node(ctx: Context) -> Event:
     )
 
 
+def dispatch_turn_node(ctx: Context) -> Event:
+    """Route an invocation to initial analysis or follow-up handling."""
+    mode = ctx.state.get("workflow_mode", "analysis")
+    if mode not in {"analysis", "followup"}:
+        raise ValueError(f"Unsupported workflow mode: {mode!r}")
+    return Event(
+        output=ctx.user_content,
+        actions=EventActions(route=mode),
+    )
+
+
 def invalid_dataset_node(ctx: Context) -> dict[str, Any]:
     """Create a clear final result when the CSV cannot pass validation."""
     validation = ctx.state.get("dataset_validation", {})
@@ -213,6 +224,10 @@ def _normalize_analysis_outputs(result: dict[str, Any]) -> None:
         result["structured_output_errors"] = structured_output_errors
 
 
+turn_dispatch_node = FunctionNode(
+    func=dispatch_turn_node,
+    name="dispatch_turn",
+)
 validation_node = FunctionNode(func=validate_dataset_node, name="validate_dataset")
 invalid_dataset_node = FunctionNode(
     func=invalid_dataset_node,
@@ -234,7 +249,11 @@ root_agent = Workflow(
     ),
     max_concurrency=3,
     edges=[
-        (START, validation_node),
+        (START, turn_dispatch_node),
+        (
+            turn_dispatch_node,
+            {"analysis": validation_node, "followup": followup_agent},
+        ),
         (validation_node, {"valid": manager_agent, "invalid": invalid_dataset_node}),
         (manager_agent, profiler_agent),
         (profiler_agent, (sales_node, product_node, customer_node)),
@@ -270,7 +289,6 @@ class WorkflowService:
         self,
         session_service: BaseSessionService | None = None,
         runner: Runner | None = None,
-        followup_runner: Runner | None = None,
         quality_evaluation_manager: QualityEvaluationManager | None = None,
     ) -> None:
         self.app_name = "clothing_retail_analyst"
@@ -282,11 +300,6 @@ class WorkflowService:
         self.session_service = session_service
         self.runner = runner or Runner(
             node=root_agent,
-            app_name=self.app_name,
-            session_service=self.session_service,
-        )
-        self.followup_runner = followup_runner or Runner(
-            node=followup_agent,
             app_name=self.app_name,
             session_service=self.session_service,
         )
@@ -314,6 +327,7 @@ class WorkflowService:
                 "csv_path": str(Path(csv_path).resolve()),
                 "dataset_name": dataset_name or Path(csv_path).name,
                 "user_question": normalized_question,
+                "workflow_mode": "analysis",
             },
         )
         result = await self._run_turn(
@@ -551,10 +565,13 @@ class WorkflowService:
             )
         else:
             events: list[Event] = []
-            async for event in self.followup_runner.run_async(
+            async for event in self.runner.run_async(
                 user_id=user_id,
                 session_id=session_id,
-                state_delta={"followup_answer": None},
+                state_delta={
+                    "workflow_mode": "followup",
+                    "followup_answer": None,
+                },
                 new_message=types.Content(
                     role="user",
                     parts=[types.Part(text=question)],

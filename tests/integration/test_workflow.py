@@ -1,5 +1,6 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 
 from google.adk import Context, Runner
 from google.adk.agents._streaming_mode import StreamingMode
@@ -9,7 +10,7 @@ from google.adk.workflow import FunctionNode, JoinNode, START, Workflow
 from google.genai import types
 
 from app.agent import WorkflowService, root_agent, run_analysis
-from app.agent import _guarded_specialist_node
+from app.agent import _guarded_specialist_node, dispatch_turn_node
 from google.adk.sessions import DatabaseSessionService
 
 
@@ -92,9 +93,10 @@ def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
             return f"quality-{len(self.invocations)}"
 
     class StubRunner:
-        def __init__(self, state_delta):
-            self.state_delta = state_delta
+        def __init__(self, output_by_call):
+            self.output_by_call = output_by_call
             self.calls = []
+            self.state_deltas = []
             self.run_configs = []
 
         async def run_async(
@@ -107,6 +109,7 @@ def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
             run_config=None,
         ):
             self.calls.append(new_message.parts[0].text)
+            self.state_deltas.append(dict(state_delta or {}))
             self.run_configs.append(run_config)
             session = await session_service.get_session(
                 app_name="clothing_retail_analyst",
@@ -114,7 +117,7 @@ def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
                 session_id=session_id,
             )
             changes = dict(state_delta or {})
-            changes.update(self.state_delta)
+            changes.update(self.output_by_call[len(self.calls) - 1])
             await session_service.append_event(
                 session,
                 Event(
@@ -133,19 +136,22 @@ def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
                 partial=True,
             )
 
-    workflow_runner = StubRunner(
-        {
-            "analysis_goal": {"analysis_goal": "Summarize sales"},
-            "business_insights": {"key_finding": "June had the highest sales"},
-        }
+    runner = StubRunner(
+        [
+            {
+                "analysis_goal": {"analysis_goal": "Summarize sales"},
+                "business_insights": {
+                    "key_finding": "June had the highest sales"
+                },
+            },
+            {"followup_answer": "June had the highest sales."},
+        ]
     )
-    followup_runner = StubRunner({"followup_answer": "June had the highest sales."})
     quality_manager = QualityManager()
     streamed_events = []
     service = WorkflowService(
         session_service=session_service,
-        runner=workflow_runner,
-        followup_runner=followup_runner,
+        runner=runner,
         quality_evaluation_manager=quality_manager,
     )
 
@@ -167,11 +173,18 @@ def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
 
     first, followup, reopened = asyncio.run(run_turns())
 
-    assert workflow_runner.calls == ["Summarize sales"]
-    assert followup_runner.calls == ["Which month had the highest sales?"]
+    assert runner.calls == [
+        "Summarize sales",
+        "Which month had the highest sales?",
+    ]
+    assert runner.state_deltas == [
+        {},
+        {"workflow_mode": "followup", "followup_answer": None},
+    ]
+    assert not hasattr(service, "followup_runner")
     assert all(
         config is not None and config.streaming_mode is StreamingMode.SSE
-        for config in workflow_runner.run_configs + followup_runner.run_configs
+        for config in runner.run_configs
     )
     assert [event.partial for event in streamed_events] == [True, True]
     assert all(event.content.parts[0].text == "streamed chunk" for event in streamed_events)
@@ -373,7 +386,9 @@ def test_root_agent_has_expected_graph_topology():
         (edge.from_node.name, edge.to_node.name, edge.route)
         for edge in graph.edges
     }
-    assert ("__START__", "validate_dataset", None) in edges
+    assert ("__START__", "dispatch_turn", None) in edges
+    assert ("dispatch_turn", "validate_dataset", "analysis") in edges
+    assert ("dispatch_turn", "followup_agent", "followup") in edges
     assert ("validate_dataset", "manager_agent", "valid") in edges
     assert ("validate_dataset", "invalid_dataset", "invalid") in edges
     assert ("profiler_agent", "sales_agent_guard", None) in edges
@@ -384,6 +399,35 @@ def test_root_agent_has_expected_graph_topology():
     assert ("customer_agent_guard", "specialist_join", None) in edges
     assert ("specialist_join", "insight_agent", None) in edges
     assert ("insight_agent", "recommendation_agent", None) in edges
+
+
+def test_turn_dispatch_routes_initial_and_followup_modes():
+    user_content = types.Content(
+        role="user",
+        parts=[types.Part(text="Which month had highest sales?")],
+    )
+    initial = dispatch_turn_node(
+        SimpleNamespace(state={}, user_content=user_content)
+    )
+    followup = dispatch_turn_node(
+        SimpleNamespace(
+            state={"workflow_mode": "followup"},
+            user_content=user_content,
+        )
+    )
+
+    assert initial.actions.route == "analysis"
+    assert followup.actions.route == "followup"
+    assert initial.output == followup.output == user_content
+
+    try:
+        dispatch_turn_node(
+            SimpleNamespace(state={"workflow_mode": "unknown"})
+        )
+    except ValueError as exc:
+        assert "Unsupported workflow mode" in str(exc)
+    else:
+        raise AssertionError("Unsupported workflow modes must be rejected.")
 
 
 def test_failed_specialist_does_not_discard_successful_parallel_result():
