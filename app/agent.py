@@ -28,12 +28,22 @@ from app.agents.product_agent import product_agent
 from app.agents.profiler_agent import profiler_agent
 from app.agents.recommendation_agent import recommendation_agent
 from app.agents.sales_agent import sales_agent
-from app.config import SAMPLE_DATA_PATH, SESSION_DB_PATH
+from app.config import (
+    LIVE_QUALITY_EVALUATION_ENABLED,
+    SAMPLE_DATA_PATH,
+    SESSION_DB_PATH,
+)
+from app.live_quality import (
+    QualityEvaluationManager,
+    create_live_invocation,
+    live_quality_evaluations,
+)
 from app.schemas.analysis_models import AnalysisPlan, BusinessInsights, Recommendations
 from app.tools import load_csv, validate_schema
 
 logger = logging.getLogger(__name__)
 EventCallback = Callable[[Event], None]
+_LIVE_QUALITY_STATE_PREFIX = "live_response_quality_"
 
 STRUCTURED_OUTPUT_MODELS: dict[str, type[BaseModel]] = {
     "analysis_goal": AnalysisPlan,
@@ -261,6 +271,7 @@ class WorkflowService:
         session_service: BaseSessionService | None = None,
         runner: Runner | None = None,
         followup_runner: Runner | None = None,
+        quality_evaluation_manager: QualityEvaluationManager | None = None,
     ) -> None:
         self.app_name = "clothing_retail_analyst"
         if session_service is None:
@@ -278,6 +289,9 @@ class WorkflowService:
             node=followup_agent,
             app_name=self.app_name,
             session_service=self.session_service,
+        )
+        self.quality_evaluation_manager = (
+            quality_evaluation_manager or live_quality_evaluations
         )
 
     async def start_analysis(
@@ -407,11 +421,39 @@ class WorkflowService:
             if isinstance(question, str) and question and result:
                 turns = [{"question": question, "result": result}]
 
+        resolved_turns = []
+        for turn in turns:
+            if not isinstance(turn, dict) or not isinstance(turn.get("result"), dict):
+                resolved_turns.append(turn)
+                continue
+            result = turn["result"]
+            quality = result.get("live_response_quality")
+            if not isinstance(quality, dict):
+                resolved_turns.append(turn)
+                continue
+            evaluation_id = quality.get("evaluation_id")
+            outcome = (
+                session.state.get(f"{_LIVE_QUALITY_STATE_PREFIX}{evaluation_id}")
+                if isinstance(evaluation_id, str)
+                else None
+            )
+            if not isinstance(outcome, dict):
+                resolved_turns.append(turn)
+                continue
+            resolved_turn = dict(turn)
+            resolved_result = dict(result)
+            resolved_result["live_response_quality"] = {
+                "evaluation_id": evaluation_id,
+                **outcome,
+            }
+            resolved_turn["result"] = resolved_result
+            resolved_turns.append(resolved_turn)
+
         return AnalysisHistory(
             session_id=session.id,
             csv_path=csv_path,
             dataset_name=session.state.get("dataset_name", Path(csv_path).name),
-            turns=turns,
+            turns=resolved_turns,
             last_update_time=session.last_update_time,
         )
 
@@ -430,6 +472,7 @@ class WorkflowService:
         state_delta: dict[str, Any] | None = None,
         on_event: EventCallback | None = None,
     ) -> dict[str, Any]:
+        events: list[Event] = []
         async for event in self.runner.run_async(
             user_id=user_id,
             session_id=session_id,
@@ -440,6 +483,7 @@ class WorkflowService:
             ),
             run_config=RunConfig(streaming_mode=StreamingMode.SSE),
         ):
+            events.append(event)
             if on_event is not None:
                 on_event(event)
 
@@ -453,6 +497,12 @@ class WorkflowService:
 
         result = self._result_from_state(session.state)
         _normalize_analysis_outputs(result)
+        if LIVE_QUALITY_EVALUATION_ENABLED and not result.get("workflow_error"):
+            result["live_response_quality"] = self._schedule_quality_evaluation(
+                question,
+                result,
+                events,
+            )
 
         await self._append_analysis_turn(session, question, result)
         return result
@@ -500,6 +550,7 @@ class WorkflowService:
                 "complete successfully. Please upload a valid CSV and start a new analysis."
             )
         else:
+            events: list[Event] = []
             async for event in self.followup_runner.run_async(
                 user_id=user_id,
                 session_id=session_id,
@@ -510,6 +561,7 @@ class WorkflowService:
                 ),
                 run_config=RunConfig(streaming_mode=StreamingMode.SSE),
             ):
+                events.append(event)
                 if on_event is not None:
                     on_event(event)
 
@@ -528,8 +580,85 @@ class WorkflowService:
             answer = answer.strip()
 
         result = {"followup_answer": answer}
+        if (
+            LIVE_QUALITY_EVALUATION_ENABLED
+            and has_saved_analysis
+            and not analysis_result.get("workflow_error")
+        ):
+            result["live_response_quality"] = self._schedule_quality_evaluation(
+                question,
+                result,
+                events,
+                evidence_context=analysis_result,
+            )
         await self._append_analysis_turn(session, question, result)
         return result
+
+    def _schedule_quality_evaluation(
+        self,
+        question: str,
+        result: dict[str, Any],
+        events: list[Event],
+        evidence_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        try:
+            invocation = create_live_invocation(
+                question,
+                result,
+                events,
+                evidence_context=evidence_context,
+            )
+            evaluation_id = self.quality_evaluation_manager.submit(invocation)
+        except Exception:
+            logger.exception("Could not schedule live response-quality evaluation.")
+            return {
+                "status": "error",
+                "message": (
+                    "The response was delivered, but its quality evaluation "
+                    "could not be scheduled. Check the application logs."
+                ),
+            }
+        return {"evaluation_id": evaluation_id, "status": "pending"}
+
+    async def save_live_quality_evaluation(
+        self,
+        user_id: str,
+        session_id: str,
+        evaluation_id: str,
+        outcome: dict[str, Any],
+    ) -> bool:
+        """Persist a background judge result into its matching conversation turn."""
+        session = await self.session_service.get_session(
+            app_name=self.app_name,
+            user_id=user_id,
+            session_id=session_id,
+        )
+        if session is None:
+            raise ValueError("Analysis session was not found for this user.")
+
+        turns = session.state.get("analysis_turns", [])
+        for turn in turns:
+            if not isinstance(turn, dict) or not isinstance(turn.get("result"), dict):
+                continue
+            quality = turn["result"].get("live_response_quality")
+            if (
+                not isinstance(quality, dict)
+                or quality.get("evaluation_id") != evaluation_id
+            ):
+                continue
+            state_key = f"{_LIVE_QUALITY_STATE_PREFIX}{evaluation_id}"
+            if state_key in session.state:
+                return True
+            await self.session_service.append_event(
+                session,
+                Event(
+                    author="live_quality_evaluation",
+                    invocation_id=f"live-quality-{evaluation_id}",
+                    actions=EventActions(state_delta={state_key: outcome}),
+                ),
+            )
+            return True
+        return False
 
     async def _append_analysis_turn(
         self,

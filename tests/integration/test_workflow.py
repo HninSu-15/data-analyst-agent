@@ -83,6 +83,14 @@ def test_workflow_service_reuses_session_dataset_and_prior_results(tmp_path):
 def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
     session_service = _fresh_session_service(tmp_path)
 
+    class QualityManager:
+        def __init__(self):
+            self.invocations = []
+
+        def submit(self, invocation):
+            self.invocations.append(invocation)
+            return f"quality-{len(self.invocations)}"
+
     class StubRunner:
         def __init__(self, state_delta):
             self.state_delta = state_delta
@@ -132,11 +140,13 @@ def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
         }
     )
     followup_runner = StubRunner({"followup_answer": "June had the highest sales."})
+    quality_manager = QualityManager()
     streamed_events = []
     service = WorkflowService(
         session_service=session_service,
         runner=workflow_runner,
         followup_runner=followup_runner,
+        quality_evaluation_manager=quality_manager,
     )
 
     async def run_turns():
@@ -165,7 +175,25 @@ def test_followup_uses_saved_analysis_without_rerunning_full_workflow(tmp_path):
     )
     assert [event.partial for event in streamed_events] == [True, True]
     assert all(event.content.parts[0].text == "streamed chunk" for event in streamed_events)
-    assert followup.result == {"followup_answer": "June had the highest sales."}
+    assert followup.result["followup_answer"] == "June had the highest sales."
+    assert len(quality_manager.invocations) == 2
+    assert first.result["live_response_quality"] == {
+        "evaluation_id": "quality-1",
+        "status": "pending",
+    }
+    assert followup.result["live_response_quality"] == {
+        "evaluation_id": "quality-2",
+        "status": "pending",
+    }
+    assert quality_manager.invocations[0].final_response.parts[0].text.startswith(
+        "Key finding:"
+    )
+    assert quality_manager.invocations[1].final_response.parts[0].text == (
+        "June had the highest sales."
+    )
+    followup_judge_input = quality_manager.invocations[1].user_content.parts[0].text
+    assert "Trusted saved analysis results" in followup_judge_input
+    assert '"key_finding": "June had the highest sales"' in followup_judge_input
     assert reopened is not None
     assert reopened.turns[0]["result"] == first.result
     assert reopened.turns[1] == {
@@ -215,6 +243,76 @@ def test_create_validation_report_persists_failure_without_running_agents(tmp_pa
             "result": report.result,
         }
     ]
+
+
+def test_live_quality_evaluation_is_saved_to_its_matching_turn():
+    session_service = InMemorySessionService()
+    service = WorkflowService(session_service=session_service)
+    user_id = "live-quality-user"
+    session_id = "live-quality-session"
+    evaluation_id = "live-quality-evaluation"
+
+    async def run():
+        await session_service.create_session(
+            app_name=service.app_name,
+            user_id=user_id,
+            session_id=session_id,
+            state={
+                "csv_path": "sales.csv",
+                "analysis_turns": [
+                    {
+                        "question": "Summarize sales.",
+                        "result": {
+                            "business_insights": {"key_finding": "Sales increased."},
+                            "live_response_quality": {
+                                "evaluation_id": evaluation_id,
+                                "status": "pending",
+                            },
+                        },
+                    }
+                ],
+            },
+        )
+        updated = await service.save_live_quality_evaluation(
+            user_id,
+            session_id,
+            evaluation_id,
+            {
+                "status": "passed",
+                "score": 0.9,
+                "threshold": 0.7,
+                "judge_model": "test-provider/judge",
+                "rubric_scores": [],
+            },
+        )
+        session = await session_service.get_session(
+            app_name=service.app_name,
+            user_id=user_id,
+            session_id=session_id,
+        )
+        history = await service.get_analysis(user_id, session_id)
+        return updated, session, history
+
+    updated, session, history = asyncio.run(run())
+
+    assert updated
+    assert session is not None
+    assert session.state[f"live_response_quality_{evaluation_id}"] == {
+        "status": "passed",
+        "score": 0.9,
+        "threshold": 0.7,
+        "judge_model": "test-provider/judge",
+        "rubric_scores": [],
+    }
+    assert history is not None
+    assert history.turns[0]["result"]["live_response_quality"] == {
+        "evaluation_id": evaluation_id,
+        "status": "passed",
+        "score": 0.9,
+        "threshold": 0.7,
+        "judge_model": "test-provider/judge",
+        "rubric_scores": [],
+    }
 
 
 def test_workflow_service_does_not_allow_another_user_to_resume_session(tmp_path):

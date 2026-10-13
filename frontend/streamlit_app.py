@@ -218,18 +218,23 @@ def _history_label(analysis) -> str:
     return f"{question[:55]} ({updated})"
 
 
-def _render_conversation(analysis) -> None:
+def _render_conversation(analysis, user_id: str) -> None:
     for turn in analysis.turns:
         with st.chat_message("user"):
             st.markdown(turn["question"])
         with st.chat_message("assistant"):
-            _render_result(turn["result"])
+            _render_result(turn["result"], user_id, analysis.session_id)
 
 
-def _render_result(result: dict) -> None:
+def _render_result(
+    result: dict,
+    user_id: str | None = None,
+    session_id: str | None = None,
+) -> None:
     followup_answer = result.get("followup_answer")
     if isinstance(followup_answer, str):
         st.markdown(followup_answer)
+        _render_live_quality(result, user_id, session_id)
         return
 
     workflow_error = result.get("workflow_error")
@@ -239,6 +244,7 @@ def _render_result(result: dict) -> None:
             st.write(f"- {error}")
         for warning in workflow_error.get("warnings", []):
             st.warning(warning)
+        _render_live_quality(result, user_id, session_id)
         return
 
     insights = result.get("business_insights")
@@ -302,6 +308,115 @@ def _render_result(result: dict) -> None:
         for issue in result.get("structured_output_errors", []):
             st.warning(issue.get("error", "Some structured output could not be validated."))
 
+    _render_live_quality(result, user_id, session_id)
+
+
+def _display_live_quality_result(quality: dict) -> None:
+    status = quality.get("status")
+    if status == "pending":
+        st.caption("Answer quality review is running in the background.")
+    elif status == "not_evaluated":
+        st.caption("The judge could not produce a quality score for this response.")
+    elif status == "passed" or status == "failed":
+        score = quality.get("score")
+        if isinstance(score, (int, float)):
+            st.caption(
+                f"Answer quality score: {score:.2f} / 1.00 "
+                f"(threshold: {quality.get('threshold', 0.7):.2f})"
+            )
+        for rubric_score in quality.get("rubric_scores", []):
+            if not isinstance(rubric_score, dict):
+                continue
+            label = rubric_score.get("rubric_id", "Rubric")
+            score = rubric_score.get("score")
+            rationale = rubric_score.get("rationale")
+            text = f"**{label}**"
+            if isinstance(score, (int, float)):
+                text += f" — {score:.2f}"
+            st.markdown(text)
+            if rationale:
+                st.caption(rationale)
+    elif status == "error":
+        st.warning(
+            quality.get(
+                "message",
+                "The response quality evaluation failed.",
+            )
+        )
+    elif status == "unavailable":
+        st.warning(
+            "The quality evaluation result is unavailable, possibly because "
+            "the app restarted before the background evaluation completed."
+        )
+
+
+@st.fragment(run_every="1s")
+def _poll_live_quality_evaluation(
+    evaluation_id: str,
+    user_id: str,
+    session_id: str,
+) -> None:
+    quality = workflow_service.quality_evaluation_manager.get_status(evaluation_id)
+    if quality.get("status") == "pending":
+        _display_live_quality_result(quality)
+        return
+
+    try:
+        persisted = asyncio.run(
+            workflow_service.save_live_quality_evaluation(
+                user_id,
+                session_id,
+                evaluation_id,
+                quality,
+            )
+        )
+    except Exception:
+        logger.exception(
+            "Could not persist live quality evaluation %s.",
+            evaluation_id,
+        )
+        quality = {
+            "status": "error",
+            "message": (
+                "The quality score is ready but could not be saved to the "
+                "analysis history. Check the application logs."
+            ),
+        }
+        _display_live_quality_result(quality)
+        return
+
+    if persisted:
+        st.rerun(scope="app")
+    st.session_state[f"live_quality_outcome_{evaluation_id}"] = quality
+    st.error("The quality result could not be matched to its conversation turn.")
+    _display_live_quality_result(quality)
+
+
+def _render_live_quality(
+    result: dict,
+    user_id: str | None,
+    session_id: str | None,
+) -> None:
+    quality = result.get("live_response_quality")
+    if not isinstance(quality, dict):
+        return
+    evaluation_id = quality.get("evaluation_id")
+    if (
+        quality.get("status") == "pending"
+        and isinstance(evaluation_id, str)
+        and user_id is not None
+        and session_id is not None
+    ):
+        cached_outcome = st.session_state.get(
+            f"live_quality_outcome_{evaluation_id}"
+        )
+        if isinstance(cached_outcome, dict):
+            _display_live_quality_result(cached_outcome)
+            return
+        _poll_live_quality_evaluation(evaluation_id, user_id, session_id)
+        return
+    _display_live_quality_result(quality)
+
 
 def _render_json_detail(value: object) -> None:
     if isinstance(value, str):
@@ -322,6 +437,11 @@ def main() -> None:
     )
     st.title("Clothing Retail Analyst")
     st.write("Upload a sales CSV, ask a business question, and continue with follow-ups.")
+    st.caption(
+        "A background LLM judge scores each generated answer against quality rubrics. "
+        "This adds a model request and sends the answer plus relevant tool results to "
+        "the configured judge provider."
+    )
 
     if _USER_ID_KEY not in st.session_state:
         st.session_state[_USER_ID_KEY] = ANALYSIS_USER_ID
@@ -439,7 +559,7 @@ def main() -> None:
         return
 
     if current_analysis is not None:
-        _render_conversation(current_analysis)
+        _render_conversation(current_analysis, user_id)
 
     question = st.chat_input("Ask a question about this dataset")
     if not question:
@@ -503,7 +623,7 @@ def main() -> None:
         else:
             progress.update(label="Analysis complete", state="complete", expanded=False)
             st.markdown("### Final response")
-            _render_result(run.result)
+            _render_result(run.result, user_id, run.session_id)
             st.rerun()
 
 
